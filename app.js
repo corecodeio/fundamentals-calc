@@ -1,3 +1,20 @@
+// ================================================== memory
+let memory = [];
+let activeOperation = null;
+let prevOperation = null;
+
+/**
+ *
+ * FEATURES:
+ *
+ * 1. font display base on result length
+ * 2. copy percentage behavior
+ * 3. history
+ * 4. previou of operation
+ * 5. backspace (delete single digit)
+ *
+ */
+
 // ================================================== display
 const display = document.querySelector('#display');
 
@@ -38,8 +55,26 @@ percent.addEventListener('click', () => {
 // ================================================== decimal
 const dot = document.querySelector('#dot');
 
+const decimalHandler = () => {
+  const currentDisplay = display.innerHTML;
+  if (currentDisplay.indexOf('.') > 0) return;
+  display.innerHTML = `${currentDisplay}.`;
+};
+
+dot.addEventListener('click', () => decimalHandler());
+
 // ================================================== equal
 const equal = document.querySelector('#equal');
+
+const equalHandler = () => {
+  const operation = `${memory.join(' ')} ${Number(display.innerHTML)}`;
+  display.innerHTML = `${eval(operation)}`;
+  memory = [];
+  activeOperation = null;
+  prevOperation = null;
+};
+
+equal.addEventListener('click', () => equalHandler());
 
 // ================================================== operators
 const div = document.querySelector('#div');
@@ -54,13 +89,42 @@ const operators = [
   { el: sub, op: '-' },
 ];
 
-const operationHandler = (op) => {
+// HOVER:
+// background-color: #ffffff;
+// color: #ee6c4d;
+
+// NORMAL:
+// background-color: #ee6c4d;
+// color: #ffffff;
+
+const setSelectedOperation = (elOp) => {
+  elOp.style.backgroundColor = '#ffffff';
+  elOp.style.color = '#ee6c4d';
+};
+
+const setUnSelectedOperation = (elOp) => {
+  elOp.style.backgroundColor = '#ee6c4d';
+  elOp.style.color = '#ffffff';
+};
+
+const operationHandler = (op, opEl) => {
   // Herbert:
-  // Array de 3 posiciones (memoria de operaciones) ['-90', '*', '100']
+  setSelectedOperation(opEl);
+  const currentDisplay = display.innerHTML;
+  if (memory.length === 0) {
+    memory.push(currentDisplay);
+  }
+  if (memory.length > 1) {
+    equalHandler();
+    memory.push(Number(display.innerHTML));
+  }
+  memory.push(op);
+  activeOperation = opEl;
+  prevOperation = opEl;
 };
 
 operators.forEach((oper) =>
-  oper.el.addEventListener('click', () => operationHandler(oper.op))
+  oper.el.addEventListener('click', () => operationHandler(oper.op, oper.el))
 );
 
 // ================================================== numbers
@@ -78,6 +142,11 @@ const nine = document.querySelector('#nine');
 const numbers = [zero, one, two, three, four, five, six, seven, eighth, nine];
 
 const numberHandler = (n) => {
+  if (prevOperation !== null) {
+    setUnSelectedOperation(prevOperation);
+    display.innerHTML = '';
+    activeOperation = null;
+  }
   ac.innerHTML = 'C';
   const currentDisplay = display.innerHTML;
   let newDisplay = `${currentDisplay}${n}`;
