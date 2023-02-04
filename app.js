@@ -1,64 +1,74 @@
-// ================================================== memory
+// ================================================== utilities
+const SELECTED_CLASS_STYLE = 'selected';
+const INVALID_CLASS_STYLE = 'invalid';
 let memory = [];
 let activeOperation = null;
-let prevOperation = null;
-
-/**
- *
- * FEATURES:
- *
- * 1. font display base on result length
- * 2. copy percentage behavior
- * 3. history
- * 4. previou of operation
- * 5. backspace (delete single digit)
- *
- */
+let errorState = false;
 
 // ================================================== display
 const display = document.querySelector('#display');
 
+const setDisplayValue = (value) => {
+  let displayValue = value;
+  if (!isFinite(Number(value))) {
+    displayValue = 'Error';
+    errorStateHandler();
+  }
+  display.innerHTML = displayValue;
+};
+
+// ================================================== reset
+const resetHandler = () => {
+  memory = [];
+  activeOperation = null;
+  errorState = false;
+};
+
 // ================================================== ac
 const ac = document.querySelector('#ac');
 
-ac.addEventListener('click', () => {
+const acHandler = () => {
   ac.innerHTML = 'AC';
-  display.innerHTML = '0';
-});
+  setDisplayValue('0');
+  resetHandler();
+  resetErrorStateHandler();
+};
+
+ac.addEventListener('click', () => acHandler());
 
 // ================================================== sig
 const sig = document.querySelector('#sig');
 
-sig.addEventListener('click', () => {
+const sigHandler = () => {
+  if (errorState) return;
   const currentDisplay = display.innerHTML;
-  let newDisplay = `${Number(currentDisplay) * -1}`;
+  let newDisplay = Number(currentDisplay) * -1;
   if (currentDisplay === '0') {
     newDisplay = '-0';
   }
-  display.innerHTML = newDisplay;
-});
+  setDisplayValue(newDisplay);
+};
+
+sig.addEventListener('click', () => sigHandler());
 
 // ================================================== percent
 const percent = document.querySelector('#percent');
 
-percent.addEventListener('click', () => {
-  const currentDisplay = display.innerHTML;
-  // Jose Miguiel
-  // x = n1
-  // y = n2 (Porcentaje que quiero encontrar)
-  // (n1 * n2 ) / 100
+const percentHandler = () => {
+  if (errorState) return;
+  setDisplayValue(Number(display.innerHTML) / 100);
+};
 
-  // simples mortales
-  display.innerHTML = `${Number(currentDisplay) / 100}`;
-});
+percent.addEventListener('click', () => percentHandler());
 
 // ================================================== decimal
 const dot = document.querySelector('#dot');
 
 const decimalHandler = () => {
+  if (errorState) return;
   const currentDisplay = display.innerHTML;
   if (currentDisplay.indexOf('.') > 0) return;
-  display.innerHTML = `${currentDisplay}.`;
+  setDisplayValue(`${currentDisplay}.`);
 };
 
 dot.addEventListener('click', () => decimalHandler());
@@ -67,11 +77,10 @@ dot.addEventListener('click', () => decimalHandler());
 const equal = document.querySelector('#equal');
 
 const equalHandler = () => {
+  if (errorState) return;
   const operation = `${memory.join(' ')} ${Number(display.innerHTML)}`;
-  display.innerHTML = `${eval(operation)}`;
-  memory = [];
-  activeOperation = null;
-  prevOperation = null;
+  setDisplayValue(eval(operation));
+  resetHandler();
 };
 
 equal.addEventListener('click', () => equalHandler());
@@ -89,30 +98,23 @@ const operators = [
   { el: sub, op: '-' },
 ];
 
-// HOVER:
-// background-color: #ffffff;
-// color: #ee6c4d;
-
-// NORMAL:
-// background-color: #ee6c4d;
-// color: #ffffff;
-
 const setSelectedOperation = (elOp) => {
-  elOp.style.backgroundColor = '#ffffff';
-  elOp.style.color = '#ee6c4d';
+  elOp.classList.add(SELECTED_CLASS_STYLE);
 };
 
 const setUnSelectedOperation = (elOp) => {
-  elOp.style.backgroundColor = '#ee6c4d';
-  elOp.style.color = '#ffffff';
+  elOp.classList.remove(SELECTED_CLASS_STYLE);
 };
 
-const operationHandler = (op, opEl) => {
-  // Herbert:
+const operationHandler = ({ el: opEl, op }) => {
+  if (errorState) return;
+  if (activeOperation !== null && memory.length > 1) {
+    setUnSelectedOperation(activeOperation);
+    memory.pop();
+  }
   setSelectedOperation(opEl);
-  const currentDisplay = display.innerHTML;
   if (memory.length === 0) {
-    memory.push(currentDisplay);
+    memory.push(Number(display.innerHTML));
   }
   if (memory.length > 1) {
     equalHandler();
@@ -120,11 +122,10 @@ const operationHandler = (op, opEl) => {
   }
   memory.push(op);
   activeOperation = opEl;
-  prevOperation = opEl;
 };
 
 operators.forEach((oper) =>
-  oper.el.addEventListener('click', () => operationHandler(oper.op, oper.el))
+  oper.el.addEventListener('click', () => operationHandler(oper))
 );
 
 // ================================================== numbers
@@ -142,9 +143,10 @@ const nine = document.querySelector('#nine');
 const numbers = [zero, one, two, three, four, five, six, seven, eighth, nine];
 
 const numberHandler = (n) => {
-  if (prevOperation !== null) {
-    setUnSelectedOperation(prevOperation);
-    display.innerHTML = '';
+  if (errorState) return;
+  if (activeOperation !== null) {
+    setUnSelectedOperation(activeOperation);
+    setDisplayValue('');
     activeOperation = null;
   }
   ac.innerHTML = 'C';
@@ -153,7 +155,36 @@ const numberHandler = (n) => {
   if (currentDisplay === '0') {
     newDisplay = n;
   }
-  display.innerHTML = `${Number(newDisplay)}`;
+  setDisplayValue(Number(newDisplay));
 };
 
 numbers.forEach((n, i) => n.addEventListener('click', () => numberHandler(i)));
+
+// ================================================== error
+const errorStateHandler = () => {
+  errorState = true;
+  numbers.forEach((el) => {
+    el.classList.add(INVALID_CLASS_STYLE);
+  });
+  operators.forEach(({ el }) => {
+    el.classList.add(INVALID_CLASS_STYLE);
+  });
+  dot.classList.add(INVALID_CLASS_STYLE);
+  equal.classList.add(INVALID_CLASS_STYLE);
+  percent.classList.add(INVALID_CLASS_STYLE);
+  sig.classList.add(INVALID_CLASS_STYLE);
+};
+
+const resetErrorStateHandler = () => {
+  errorState = false;
+  numbers.forEach((el) => {
+    el.classList.remove(INVALID_CLASS_STYLE);
+  });
+  operators.forEach(({ el }) => {
+    el.classList.remove(INVALID_CLASS_STYLE);
+  });
+  dot.classList.remove(INVALID_CLASS_STYLE);
+  equal.classList.remove(INVALID_CLASS_STYLE);
+  percent.classList.remove(INVALID_CLASS_STYLE);
+  sig.classList.remove(INVALID_CLASS_STYLE);
+};
