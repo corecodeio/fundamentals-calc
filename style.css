@@ -65,6 +65,26 @@ body {
   border-radius: 55px;
 }
 
+.operation.selected,
+.equal.selected {
+  background-color: #ffffff;
+  color: #ee6c4d;
+}
+
+.operation.invalid,
+.equal.invalid,
+.button.invalid {
+  background-color: #202e47;
+  color: #8b8b8b;
+}
+
+.operation.invalid:hover,
+.equal.invalid:hover,
+.button.invalid:hover {
+  background-color: #202e47;
+  color: #8b8b8b;
+}
+
 .operation,
 .equal {
   background-color: #ee6c4d;
