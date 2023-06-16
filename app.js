@@ -60,9 +60,29 @@ percent.addEventListener('click', percentHanlder);
 // -------------------------------------------- dot
 const dot = document.querySelector('#dot');
 
+const decimalHandler = () => {
+  if (errorState) return;
+  const currentDisplay = display.innerHTML;
+  if (currentDisplay.indexOf('.') > 0) return;
+  setDisplayValue(`${currentDisplay}.`);
+};
+
+dot.addEventListener('click', decimalHandler);
+
 // -------------------------------------------- sig
 const sig = document.querySelector('#sig');
 
+const sigHandler = () => {
+  if (errorState) return;
+  const currentDisplay = display.innerHTML;
+  let newDisplay = Number(currentDisplay) * -1;
+  if (currentDisplay === '0') {
+    newDisplay = '-0';
+  }
+  setDisplayValue(newDisplay);
+};
+
+sig.addEventListener('click', sigHandler);
 // -------------------------------------------- style mod
 const addSelectedStyle = (el) => {
   el.classList.add(SELECTED_CLASS);
@@ -129,10 +149,13 @@ const numberHandler = (n) => {
   }
   ac.innerHTML = 'C';
   const currentDisplay = display.innerHTML;
-  let newDisplay = `${currentDisplay}${n}`;
-  if (currentDisplay === '0') {
-    newDisplay = n;
-  }
+  const newDisplay = Number(`${currentDisplay}${n}`);
+  // if (currentDisplay === '0') {
+  //   newDisplay = n;
+  // }
+  // if (currentDisplay === '-0') {
+  //   newDisplay = Number(n) * -1;
+  // }
   setDisplayValue(newDisplay);
 };
 
